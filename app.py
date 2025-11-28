@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as go
+import matplotlib.pyplot as plt
+import seaborn as sns
 from datetime import datetime
 import warnings
 warnings.filterwarnings('ignore')
@@ -176,85 +176,101 @@ st.subheader("📈 Research Analytics")
 col1, col2 = st.columns(2)
 
 with col1:
+    st.markdown("#### Top 15 Professors by Total Publications")
     top_profs = filtered_df.nlargest(15, 'Total_Publications')[['Name', 'Total_Publications']].copy()
     top_profs['Name'] = top_profs['Name'].str.replace('Dr ', '')
     
-    fig1 = px.bar(
-        top_profs,
-        x='Total_Publications',
-        y='Name',
-        orientation='h',
-        title='Top 15 Professors by Total Publications',
-        labels={'Total_Publications': 'Total Publications', 'Name': 'Professor'},
-        color='Total_Publications',
-        color_continuous_scale='Blues'
-    )
-    fig1.update_layout(height=500, showlegend=False)
-    st.plotly_chart(fig1, use_container_width=True)
+    fig, ax = plt.subplots(figsize=(10, 8))
+    bars = ax.barh(top_profs['Name'], top_profs['Total_Publications'], color='#4A90E2')
+    ax.set_xlabel('Total Publications', fontsize=12)
+    ax.set_ylabel('Professor', fontsize=12)
+    ax.invert_yaxis()
+    
+    for i, bar in enumerate(bars):
+        width = bar.get_width()
+        ax.text(width, bar.get_y() + bar.get_height()/2, f'{int(width)}', 
+                ha='left', va='center', fontsize=9, fontweight='bold')
+    
+    plt.tight_layout()
+    st.pyplot(fig)
+    plt.close()
 
 with col2:
+    st.markdown("#### Total Publications by Research Domain")
     domain_pubs = filtered_df.groupby('Domain')['Total_Publications'].sum().reset_index()
     domain_pubs = domain_pubs.sort_values('Total_Publications', ascending=False)
     
-    fig2 = px.bar(
-        domain_pubs,
-        x='Domain',
-        y='Total_Publications',
-        title='Total Publications by Research Domain',
-        labels={'Total_Publications': 'Total Publications', 'Domain': 'Research Domain'},
-        color='Total_Publications',
-        color_continuous_scale='Viridis'
-    )
-    fig2.update_layout(height=500, showlegend=False)
-    st.plotly_chart(fig2, use_container_width=True)
+    fig, ax = plt.subplots(figsize=(10, 8))
+    colors = plt.cm.viridis(domain_pubs['Total_Publications'] / domain_pubs['Total_Publications'].max())
+    bars = ax.bar(range(len(domain_pubs)), domain_pubs['Total_Publications'], color=colors)
+    ax.set_xlabel('Research Domain', fontsize=12)
+    ax.set_ylabel('Total Publications', fontsize=12)
+    ax.set_xticks(range(len(domain_pubs)))
+    ax.set_xticklabels(domain_pubs['Domain'], rotation=45, ha='right')
+    
+    for i, bar in enumerate(bars):
+        height = bar.get_height()
+        ax.text(bar.get_x() + bar.get_width()/2., height,
+                f'{int(height)}', ha='center', va='bottom', fontsize=9, fontweight='bold')
+    
+    plt.tight_layout()
+    st.pyplot(fig)
+    plt.close()
 
 col3, col4 = st.columns(2)
 
 with col3:
+    st.markdown("#### Research Projects: Completed vs Ongoing (Top 15)")
     project_data = filtered_df.groupby('Name')[['Research_Projects_Completed', 'Research_Projects_Ongoing']].sum()
     project_data = project_data[project_data.sum(axis=1) > 0].nlargest(15, 'Research_Projects_Completed')
     
-    fig3 = go.Figure()
-    fig3.add_trace(go.Bar(
-        name='Completed',
-        x=project_data.index.str.replace('Dr ', ''),
-        y=project_data['Research_Projects_Completed'],
-        marker_color='#2ecc71'
-    ))
-    fig3.add_trace(go.Bar(
-        name='Ongoing',
-        x=project_data.index.str.replace('Dr ', ''),
-        y=project_data['Research_Projects_Ongoing'],
-        marker_color='#3498db'
-    ))
-    
-    fig3.update_layout(
-        title='Research Projects: Completed vs Ongoing (Top 15)',
-        xaxis_title='Professor',
-        yaxis_title='Number of Projects',
-        barmode='stack',
-        height=500
-    )
-    st.plotly_chart(fig3, use_container_width=True)
+    if len(project_data) > 0:
+        fig, ax = plt.subplots(figsize=(10, 8))
+        x = range(len(project_data))
+        width = 0.8
+        
+        p1 = ax.bar(x, project_data['Research_Projects_Completed'], width, label='Completed', color='#2ecc71')
+        p2 = ax.bar(x, project_data['Research_Projects_Ongoing'], width, 
+                    bottom=project_data['Research_Projects_Completed'], label='Ongoing', color='#3498db')
+        
+        ax.set_ylabel('Number of Projects', fontsize=12)
+        ax.set_xlabel('Professor', fontsize=12)
+        ax.set_xticks(x)
+        ax.set_xticklabels([name.replace('Dr ', '') for name in project_data.index], rotation=45, ha='right')
+        ax.legend()
+        
+        plt.tight_layout()
+        st.pyplot(fig)
+        plt.close()
+    else:
+        st.info("No project data available for selected filters")
 
 with col4:
-    designation_counts = filtered_df['Designation'].value_counts().reset_index()
-    designation_counts.columns = ['Designation', 'Count']
+    st.markdown("#### Faculty Distribution by Designation")
+    designation_counts = filtered_df['Designation'].value_counts()
     
-    fig4 = px.pie(
-        designation_counts,
-        values='Count',
-        names='Designation',
-        title='Faculty Distribution by Designation',
-        hole=0.4
-    )
-    fig4.update_layout(height=500)
-    st.plotly_chart(fig4, use_container_width=True)
+    fig, ax = plt.subplots(figsize=(10, 8))
+    colors = plt.cm.Set3(range(len(designation_counts)))
+    wedges, texts, autotexts = ax.pie(designation_counts.values, labels=designation_counts.index, 
+                                        autopct='%1.1f%%', colors=colors, startangle=90)
+    
+    for text in texts:
+        text.set_fontsize(9)
+    for autotext in autotexts:
+        autotext.set_color('white')
+        autotext.set_fontweight('bold')
+        autotext.set_fontsize(9)
+    
+    ax.axis('equal')
+    plt.tight_layout()
+    st.pyplot(fig)
+    plt.close()
 
 st.markdown("---")
 col5, col6 = st.columns(2)
 
 with col5:
+    st.markdown("#### Publication Type Distribution")
     pub_types = pd.DataFrame({
         'Publication Type': ['Journal', 'Conference', 'Books/Chapters'],
         'Count': [
@@ -264,29 +280,39 @@ with col5:
         ]
     })
     
-    fig5 = px.pie(
-        pub_types,
-        values='Count',
-        names='Publication Type',
-        title='Publication Type Distribution',
-        color_discrete_sequence=['#e74c3c', '#3498db', '#f39c12']
-    )
-    fig5.update_layout(height=400)
-    st.plotly_chart(fig5, use_container_width=True)
+    fig, ax = plt.subplots(figsize=(8, 8))
+    colors = ['#e74c3c', '#3498db', '#f39c12']
+    wedges, texts, autotexts = ax.pie(pub_types['Count'], labels=pub_types['Publication Type'], 
+                                        autopct='%1.1f%%', colors=colors, startangle=90)
+    
+    for text in texts:
+        text.set_fontsize(11)
+    for autotext in autotexts:
+        autotext.set_color('white')
+        autotext.set_fontweight('bold')
+        autotext.set_fontsize(10)
+    
+    ax.axis('equal')
+    plt.tight_layout()
+    st.pyplot(fig)
+    plt.close()
 
 with col6:
+    st.markdown("#### Faculty Count by Domain and Designation")
     domain_desig = filtered_df.groupby(['Domain', 'Designation']).size().reset_index(name='Count')
     
-    fig6 = px.bar(
-        domain_desig,
-        x='Domain',
-        y='Count',
-        color='Designation',
-        title='Faculty Count by Domain and Designation',
-        barmode='stack'
-    )
-    fig6.update_layout(height=400)
-    st.plotly_chart(fig6, use_container_width=True)
+    pivot_data = domain_desig.pivot(index='Domain', columns='Designation', values='Count').fillna(0)
+    
+    fig, ax = plt.subplots(figsize=(10, 8))
+    pivot_data.plot(kind='bar', stacked=True, ax=ax, colormap='tab20')
+    ax.set_xlabel('Research Domain', fontsize=12)
+    ax.set_ylabel('Faculty Count', fontsize=12)
+    ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha='right')
+    ax.legend(title='Designation', bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=8)
+    
+    plt.tight_layout()
+    st.pyplot(fig)
+    plt.close()
 
 st.markdown("---")
 st.subheader("📋 Detailed Faculty Data")
