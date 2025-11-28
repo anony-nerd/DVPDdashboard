@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Faculty Research Dashboard</title>
+    <link rel="stylesheet" href="/style.css">
+    
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+
+    <header id="main-header">
+        <h1>Faculty Research Dashboard</h1>
+        <p id="last-updated"></p>
+    </header>
+
+    <nav id="filter-navbar">
+        <div class="filter-group">
+            <label for="search-name">🔍 Search Professor</label>
+            <input type="text" id="search-name" placeholder="Name...">
+        </div>
+        
+        <div class="filter-group" id="designation-filter-nav">
+        </div>
+        <div class="filter-group" id="domain-filter-nav">
+        </div>
+        
+        <div class="filter-group slider-filter">
+            <label>📚 Min Total Pubs: <span id="min-total-pubs-value">0</span></label>
+            <input type="range" id="min-total-pubs" min="0" value="0">
+        </div>
+        <div class="filter-group slider-filter">
+            <label>📄 Min Journal Pubs: <span id="min-journal-pubs-value">0</span></label>
+            <input type="range" id="min-journal-pubs" min="0" value="0">
+        </div>
+
+        <div class="filter-group">
+            <button id="reset-filters">🔄 Reset Filters</button>
+        </div>
+    </nav>
+
+    <main id="main-content">
+        <section class="dashboard-section">
+            <h2>📊 Key Performance Indicators (KPIs)</h2>
+            <div id="kpi-metrics">
+            </div>
+        </section>
+
+        <section class="dashboard-section">
+            <h2>📈 Visual Analysis</h2>
+            <div id="charts-container">
+                <div class="chart-item">
+                    <h3>Top Professors by Publications</h3>
+                    <div id="chart1"></div>
+                </div>
+                <div class="chart-item">
+                    <h3>Total Publications by Research Domain</h3>
+                    <div id="chart2"></div>
+                </div>
+                <div class="chart-item">
+                    <h3>Projects: Completed vs Ongoing</h3>
+                    <div id="chart3"></div>
+                </div>
+                <div class="chart-item">
+                    <h3>Faculty Distribution by Designation</h3>
+                    <div id="chart4"></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="dashboard-section">
+            <h2>📝 Filtered Data Table</h2>
+            <div id="data-table-container">
+            </div>
+        </section>
+
+    </main>
+    <footer class="footer">
+        <div class="container">
+            <p>© 2025 Dashboard Designed and Built by Mayank Garg.</p>
+            <p>Data analysis powered by advanced analytics</p>
+        </div>
+    </footer>
+    
+    <script src="/script.js"></script>
+</body>
+
+</html>
